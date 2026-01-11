@@ -5,114 +5,157 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Şafak Vakti</title>
     <style>
+        :root { --accent: #38bdf8; --bg: #0f172a; }
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
-            color: white; 
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
+            color: white; margin: 0; padding: 20px; min-height: 100vh; text-align: center;
         }
-        .container { max-width: 500px; margin: 0 auto; }
-        h1 { font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; color: #f8fafc; }
-        #sehir { font-size: 0.9rem; opacity: 0.7; margin-bottom: 30px; }
-        
-        .timer-box {
+        .container { max-width: 450px; margin: 0 auto; }
+        header { margin-bottom: 30px; padding-top: 20px; }
+        h1 { font-weight: 300; letter-spacing: 3px; margin: 0; text-transform: uppercase; font-size: 1.5rem; }
+        #konum-bilgi { font-size: 0.8rem; opacity: 0.6; margin-top: 5px; }
+
+        .main-card {
             background: rgba(255, 255, 255, 0.05);
-            padding: 30px;
-            border-radius: 20px;
+            padding: 40px 20px;
+            border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 30px;
+            backdrop-filter: blur(10px);
         }
-        #kalan-sure { font-size: 2.5rem; font-weight: bold; color: #38bdf8; }
-        #vakit-adi { font-size: 1.1rem; margin-top: 10px; display: block; }
+        #kalan-sure { font-size: 3.5rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+        #siradaki-vakit-adi { font-size: 1.1rem; opacity: 0.9; margin-bottom: 10px; display: block; }
 
-        .vakit-kart { 
-            background: rgba(255, 255, 255, 0.03); 
-            margin: 8px 0; 
-            padding: 15px 20px; 
-            border-radius: 12px; 
-            display: flex; 
-            justify-content: space-between; 
+        .vakit-liste { display: grid; gap: 10px; }
+        .vakit-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 18px 25px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            transition: 0.3s;
+            border: 1px solid transparent;
+            transition: all 0.3s;
         }
-        .vakit-kart.aktif { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; }
+        .vakit-item.aktif {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: var(--accent);
+            transform: scale(1.02);
+        }
+        .vakit-isim { font-weight: 500; font-size: 1.1rem; }
+        .vakit-saat { font-family: monospace; font-size: 1.2rem; opacity: 0.9; }
+
+        footer { margin-top: 40px; font-size: 0.9rem; font-style: italic; opacity: 0.7; padding: 20px; line-height: 1.5; }
+        button { 
+            background: var(--accent); border: none; padding: 10px 20px; 
+            border-radius: 20px; color: #000; font-weight: bold; margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Şafak Vakti</h1>
-        <div id="sehir">İstanbul</div>
+        <header>
+            <h1>Şafak Vakti</h1>
+            <div id="konum-bilgi">Konum alınıyor...</div>
+        </header>
 
-        <div class="timer-box">
-            <span id="vakit-adi">Sıradaki Vakte Kalan</span>
-            <div id="kalan-sure">09:29:00</div>
+        <div class="main-card">
+            <span id="siradaki-vakit-adi">Yükleniyor...</span>
+            <div id="kalan-sure">00:00:00</div>
         </div>
 
-        <div id="vakitler-listesi">
+        <div class="vakit-liste" id="vakit-liste">
             </div>
+
+        <footer>
+            "Namaz, müminin miracıdır."
+        </footer>
     </div>
 
     <script>
-        let ezanVakitleri = {};
-        const isimler = { "Fajr": "İmsak", "Sunrise": "Güneş", "Dhuhr": "Öğle", "Asr": "İkindi", "Maghrib": "Akşam", "Isha": "Yatsı" };
+        const vakitIsimleri = { 
+            Fajr: "İmsak", Sunrise: "Güneş", Dhuhr: "Öğle", 
+            Asr: "İkindi", Maghrib: "Akşam", Isha: "Yatsı" 
+        };
+        let vakitlerGlobal = {};
 
-        async function vakitleriGetir() {
-            const url = `https://api.aladhan.com/v1/timingsByCity?city=Istanbul&country=Turkey&method=13`;
-            try {
-                const response = await fetch(url);
-                const result = await response.json();
-                ezanVakitleri = result.data.timings;
-                arayuzuGuncelle();
-                sayaciBaslat();
-            } catch (error) { console.error("Hata:", error); }
+        // 1. Konum Al ve API'ye Sor
+        function konumuAl() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const { latitude, longitude } = pos.coords;
+                    verileriGetir(latitude, longitude);
+                }, () => verileriGetir(41.0082, 28.9784)); // Hata olursa İstanbul
+            } else { verileriGetir(41.0082, 28.9784); }
         }
 
-        function arayuzuGuncelle() {
-            const liste = document.getElementById('vakitler-listesi');
-            liste.innerHTML = "";
-            for (let anahtar in isimler) {
-                liste.innerHTML += `
-                    <div class="vakit-kart" id="kart-${anahtar}">
-                        <span>${isimler[anahtar]}</span>
-                        <span>${ezanVakitleri[anahtar]}</span>
+        async function verileriGetir(lat, lng) {
+            const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=13`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                vakitlerGlobal = data.data.timings;
+                document.getElementById('konum-bilgi').innerText = data.data.meta.timezone;
+                arayuzuCiz();
+                sayaciBaslat();
+            } catch (e) { console.error("API Hatası", e); }
+        }
+
+        function arayuzuCiz() {
+            const container = document.getElementById('vakit-liste');
+            container.innerHTML = "";
+            Object.keys(vakitIsimleri).forEach(key => {
+                container.innerHTML += `
+                    <div class="vakit-item" id="kart-${key}">
+                        <span class="vakit-isim">${vakitIsimleri[key]}</span>
+                        <span class="vakit-saat">${vakitlerGlobal[key]}</span>
                     </div>
                 `;
-            }
+            });
         }
 
         function sayaciBaslat() {
             setInterval(() => {
                 const simdi = new Date();
-                let enYakinVakit = null;
-                let minFark = Infinity;
+                let enYakinFark = Infinity;
+                let siradakiKey = "";
 
-                for (let v in isimler) {
-                    const [saat, dk] = ezanVakitleri[v].split(':');
-                    const vakitTarihi = new Date();
-                    vakitTarihi.setHours(saat, dk, 0);
+                Object.keys(vakitIsimleri).forEach(key => {
+                    const [h, m] = vakitlerGlobal[key].split(':');
+                    let vZamani = new Date();
+                    vZamani.setHours(h, m, 0);
 
-                    let fark = vakitTarihi - simdi;
-                    if (fark > 0 && fark < minFark) {
-                        minFark = fark;
-                        enYakinVakit = isimler[v];
+                    if (vZamani < simdi) vZamani.setDate(vZamani.getDate() + 1);
+
+                    let fark = vZamani - simdi;
+                    if (fark < enYakinFark) {
+                        enYakinFark = fark;
+                        siradakiKey = key;
                     }
-                }
+                    
+                    // Aktif vakti işaretle (şu an hangisindeyiz)
+                    const kart = document.getElementById(`kart-${key}`);
+                    if(kart) kart.classList.remove('aktif');
+                });
 
-                if (enYakinVakit) {
-                    const h = Math.floor(minFark / 3600000);
-                    const m = Math.floor((minFark % 3600000) / 60000);
-                    const s = Math.floor((minFark % 60000) / 1000);
-                    document.getElementById('kalan-sure').innerText = 
-                        `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-                    document.getElementById('vakit-adi').innerText = `${enYakinVakit} vaktine kalan`;
-                }
+                // Geri sayımı yazdır
+                const hours = Math.floor(enYakinFark / 3600000);
+                const mins = Math.floor((enYakinFark % 3600000) / 60000);
+                const secs = Math.floor((enYakinFark % 60000) / 1000);
+                
+                document.getElementById('kalan-sure').innerText = 
+                    `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+                document.getElementById('siradaki-vakit-adi').innerText = vakitIsimleri[siradakiKey] + " vaktine kalan";
+                
+                // Sıradaki vaktin kartını parlat
+                document.getElementById(`kart-${siradakiKey}`).classList.add('aktif');
+
             }, 1000);
         }
 
-        vakitleriGetir();
+        konumuAl();
     </script>
 </body>
 </html>
