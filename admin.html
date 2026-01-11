@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şafak Vakti - Admin Paneli</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .admin-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #1e293b; text-align: center; margin-bottom: 25px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #64748b; font-size: 0.9rem; }
+        textarea, input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-size: 1rem; }
+        button { background: #38bdf8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #0ea5e9; }
+        #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; }
+        .success { color: #10b981; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-card">
+        <h2>Şafak Vakti Yönetim</h2>
+        
+        <label>📢 Üst Duyuru (Kırmızı Alan)</label>
+        <input type="text" id="duyuruInput" placeholder="Örn: Hayırlı Cumalar...">
+
+        <label>📖 Vaktin Ayeti</label>
+        <textarea id="ayetInput" rows="3" placeholder="Ayet ve numarasını yazın..."></textarea>
+        
+        <label>📜 Hikmetname / Günün Sözü</label>
+        <textarea id="hikmetInput" rows="3" placeholder="Günün güzel sözünü yazın..."></textarea>
+
+        <button onclick="guncelle()">UYGULAMAYI GÜNCELLE</button>
+        <div id="status">✅ Güncelleme Başarılı!</div>
+    </div>
+
+    <script>
+        // Senin Firebase Bilgilerin
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6VtB6eHqiNNyoJ0x4yCpnGChB6p9AYnM",
+            authDomain: "safakvakti-5f929.firebaseapp.com",
+            projectId: "safakvakti-5f929",
+            storageBucket: "safakvakti-5f929.firebasestorage.app",
+            messagingSenderId: "1089272374742",
+            appId: "1:1089272374742:web:bc422dad721627342fb077"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function guncelle() {
+            const ayet = document.getElementById('ayetInput').value;
+            const hikmet = document.getElementById('hikmetInput').value;
+            const duyuru = document.getElementById('duyuruInput').value;
+            const btn = document.querySelector('button');
+            const status = document.getElementById('status');
+
+            btn.disabled = true;
+            btn.innerText = "GÖNDERİLİYOR...";
+
+            try {
+                await db.collection("icerik").doc("guncel").set({
+                    ayet: ayet,
+                    hikmet: hikmet,
+                    duyuru: duyuru,
+                    sonGuncelleme: new Date().toLocaleString('tr-TR')
+                });
+                
+                status.style.display = "block";
+                status.className = "success";
+                
+                setTimeout(() => { 
+                    status.style.display = "none";
+                    btn.disabled = false;
+                    btn.innerText = "UYGULAMAYI GÜNCELLE";
+                }, 3000);
+
+            } catch (e) {
+                alert("Hata: " + e.message);
+                btn.disabled = false;
+                btn.innerText = "TEKRAR DENE";
+            }
+        }
+
+        // Mevcut verileri çekip kutulara doldur (düzenleme kolaylığı için)
+        db.collection("icerik").doc("guncel").get().then((doc) => {
+            if (doc.exists) {
+                const v = doc.data();
+                document.getElementById('ayetInput').value = v.ayet || "";
+                document.getElementById('hikmetInput').value = v.hikmet || "";
+                document.getElementById('duyuruInput').value = v.duyuru || "";
+            }
+        });
+    </script>
+</body>
+</html>
