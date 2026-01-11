@@ -4,158 +4,173 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Şafak Vakti</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --accent: #38bdf8; --bg: #0f172a; }
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
-            color: white; margin: 0; padding: 20px; min-height: 100vh; text-align: center;
-        }
-        .container { max-width: 450px; margin: 0 auto; }
-        header { margin-bottom: 30px; padding-top: 20px; }
-        h1 { font-weight: 300; letter-spacing: 3px; margin: 0; text-transform: uppercase; font-size: 1.5rem; }
-        #konum-bilgi { font-size: 0.8rem; opacity: 0.6; margin-top: 5px; }
+        :root { --accent: #38bdf8; --bg: #0f172a; --text-dark: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
+        
+        /* Üst Duyuru Alanı */
+        #duyuru-alani { background: #e94560; color: white; padding: 12px; font-size: 0.9rem; font-weight: bold; text-align: center; display: none; position: sticky; top: 0; z-index: 1000; }
+        
+        .header { padding: 40px 20px; text-align: center; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
+        .city { font-size: 1.6rem; font-weight: bold; margin: 0; letter-spacing: 1px; }
+        .timer { font-size: 4.2rem; font-weight: 800; color: var(--accent); margin: 5px 0; font-variant-numeric: tabular-nums; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
+        .date-badge { background: rgba(255,255,255,0.1); border: 1px solid white; border-radius: 30px; padding: 6px 15px; font-size: 0.85rem; opacity: 0.9; }
 
-        .main-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px 20px;
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-        }
-        #kalan-sure { font-size: 3.5rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
-        #siradaki-vakit-adi { font-size: 1.1rem; opacity: 0.9; margin-bottom: 10px; display: block; }
+        /* Beyaz Panel */
+        .main-content { background: #f1f5f9; color: var(--text-dark); border-top-left-radius: 35px; border-top-right-radius: 35px; min-height: 600px; padding: 25px 15px; margin-top: -25px; box-shadow: 0 -10px 30px rgba(0,0,0,0.3); }
+        
+        /* Yatay Vakitler */
+        .vakit-scroll { display: flex; justify-content: space-between; overflow-x: auto; gap: 10px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #ddd; scrollbar-width: none; }
+        .vakit-box { text-align: center; min-width: 60px; padding: 10px 5px; border-radius: 12px; transition: 0.3s; border: 1px solid transparent; }
+        .vakit-box.active { background: rgba(56, 189, 248, 0.1); color: #e94560; border-color: var(--accent); transform: scale(1.05); }
+        .vakit-name { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .vakit-time { font-size: 1rem; font-weight: 800; display: block; margin-top: 5px; color: #1e293b; }
 
-        .vakit-liste { display: grid; gap: 10px; }
-        .vakit-item {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 18px 25px;
-            border-radius: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid transparent;
-            transition: all 0.3s;
-        }
-        .vakit-item.aktif {
-            background: rgba(56, 189, 248, 0.15);
-            border-color: var(--accent);
-            transform: scale(1.02);
-        }
-        .vakit-isim { font-weight: 500; font-size: 1.1rem; }
-        .vakit-saat { font-family: monospace; font-size: 1.2rem; opacity: 0.9; }
+        /* İçerik Kartları */
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--accent); font-weight: bold; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        .card-body { line-height: 1.6; font-size: 0.95rem; color: #334155; }
 
-        footer { margin-top: 40px; font-size: 0.9rem; font-style: italic; opacity: 0.7; padding: 20px; line-height: 1.5; }
-        button { 
-            background: var(--accent); border: none; padding: 10px 20px; 
-            border-radius: 20px; color: #000; font-weight: bold; margin-top: 10px;
-        }
+        /* Alt Menü */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #e2e8f0; z-index: 100; }
+        .nav-item { color: #64748b; font-size: 1.2rem; }
+        .nav-item.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <h1>Şafak Vakti</h1>
-            <div id="konum-bilgi">Konum alınıyor...</div>
-        </header>
+    <div id="duyuru-alani"></div>
 
-        <div class="main-card">
-            <span id="siradaki-vakit-adi">Yükleniyor...</span>
-            <div id="kalan-sure">00:00:00</div>
-        </div>
-
-        <div class="vakit-liste" id="vakit-liste">
-            </div>
-
-        <footer>
-            "Namaz, müminin miracıdır."
-        </footer>
+    <div class="header">
+        <p class="city">Ceylanpınar</p>
+        <div class="timer" id="countdown">00:00:00</div>
+        <span class="date-badge" id="h-date">Yükleniyor...</span>
     </div>
 
+    <div class="main-content">
+        <div class="vakit-scroll" id="vakit-list">
+            </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-book-open"></i> Vaktin Ayeti</div>
+            <div id="ayet-text" class="card-body">Veriler getiriliyor...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-scroll"></i> Hikmetname</div>
+            <div id="hikmet-text" class="card-body">Veriler getiriliyor...</div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active"><i class="fas fa-home"></i></div>
+        <div class="nav-item"><i class="fas fa-compass"></i></div>
+        <div class="nav-item"><i class="fas fa-book"></i></div>
+        <div class="nav-item"><i class="fas fa-cog"></i></div>
+    </nav>
+
     <script>
-        const vakitIsimleri = { 
-            Fajr: "İmsak", Sunrise: "Güneş", Dhuhr: "Öğle", 
-            Asr: "İkindi", Maghrib: "Akşam", Isha: "Yatsı" 
+        // Senin Firebase Bilgilerin
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6VtB6eHqiNNyoJ0x4yCpnGChB6p9AYnM",
+            authDomain: "safakvakti-5f929.firebaseapp.com",
+            projectId: "safakvakti-5f929",
+            storageBucket: "safakvakti-5f929.firebasestorage.app",
+            messagingSenderId: "1089272374742",
+            appId: "1:1089272374742:web:bc422dad721627342fb077"
         };
-        let vakitlerGlobal = {};
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        // 1. Konum Al ve API'ye Sor
-        function konumuAl() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const { latitude, longitude } = pos.coords;
-                    verileriGetir(latitude, longitude);
-                }, () => verileriGetir(41.0082, 28.9784)); // Hata olursa İstanbul
-            } else { verileriGetir(41.0082, 28.9784); }
-        }
+        const names = { Fajr:"İmsak", Sunrise:"Güneş", Dhuhr:"Öğle", Asr:"İkindi", Maghrib:"Akşam", Isha:"Yatsı" };
+        let times = {};
 
-        async function verileriGetir(lat, lng) {
-            const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=13`;
+        async function startApp() {
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                vakitlerGlobal = data.data.timings;
-                document.getElementById('konum-bilgi').innerText = data.data.meta.timezone;
-                arayuzuCiz();
-                sayaciBaslat();
-            } catch (e) { console.error("API Hatası", e); }
+                // Ceylanpınar vakitlerini çek
+                const res = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Ceylanpinar&country=Turkey&method=13');
+                const d = await res.json();
+                times = d.data.timings;
+                
+                // Hicri Tarih
+                const h = d.data.date.hijri;
+                document.getElementById('h-date').innerText = `${h.day} ${h.month.en} ${h.year}`;
+                
+                // Vakit Listesi Oluştur
+                const list = document.getElementById('vakit-list');
+                list.innerHTML = "";
+                Object.keys(names).forEach(k => {
+                    list.innerHTML += `
+                        <div class="vakit-box" id="b-${k}">
+                            <span class="vakit-name">${names[k]}</span>
+                            <span class="vakit-time">${times[k]}</span>
+                        </div>`;
+                });
+
+                setInterval(updateCountdown, 1000);
+                listenToAdmin();
+            } catch (err) {
+                console.error("Başlatma hatası:", err);
+            }
         }
 
-        function arayuzuCiz() {
-            const container = document.getElementById('vakit-liste');
-            container.innerHTML = "";
-            Object.keys(vakitIsimleri).forEach(key => {
-                container.innerHTML += `
-                    <div class="vakit-item" id="kart-${key}">
-                        <span class="vakit-isim">${vakitIsimleri[key]}</span>
-                        <span class="vakit-saat">${vakitlerGlobal[key]}</span>
-                    </div>
-                `;
+        function updateCountdown() {
+            const now = new Date();
+            let next = null; 
+            let nextKey = "";
+
+            Object.keys(names).forEach(k => {
+                const [h, m] = times[k].split(':');
+                let vDate = new Date();
+                vDate.setHours(parseInt(h), parseInt(m), 0);
+                
+                if (vDate < now) vDate.setDate(vDate.getDate() + 1);
+
+                let diff = vDate - now;
+                if (!next || diff < (next - now)) {
+                    next = vDate;
+                    nextKey = k;
+                }
+                document.getElementById(`b-${k}`).classList.remove('active');
+            });
+
+            // Geri sayımı yaz
+            const diff = next - now;
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('countdown').innerText = 
+                `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            
+            // Sıradaki vakti parlat
+            const activeBox = document.getElementById(`b-${nextKey}`);
+            if(activeBox) activeBox.classList.add('active');
+        }
+
+        function listenToAdmin() {
+            // Admin panelinden gelen verileri canlı dinle
+            db.collection("icerik").doc("guncel").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('ayet-text').innerText = data.ayet || "Namaz, müminin miracıdır.";
+                    document.getElementById('hikmet-text').innerText = data.hikmet || "Gönül ne kahve ister ne kahvehane...";
+                    
+                    const duyuru = document.getElementById('duyuru-alani');
+                    if(data.duyuru && data.duyuru.trim() !== "") {
+                        duyuru.innerText = "📢 " + data.duyuru;
+                        duyuru.style.display = "block";
+                    } else {
+                        duyuru.style.display = "none";
+                    }
+                }
             });
         }
 
-        function sayaciBaslat() {
-            setInterval(() => {
-                const simdi = new Date();
-                let enYakinFark = Infinity;
-                let siradakiKey = "";
-
-                Object.keys(vakitIsimleri).forEach(key => {
-                    const [h, m] = vakitlerGlobal[key].split(':');
-                    let vZamani = new Date();
-                    vZamani.setHours(h, m, 0);
-
-                    if (vZamani < simdi) vZamani.setDate(vZamani.getDate() + 1);
-
-                    let fark = vZamani - simdi;
-                    if (fark < enYakinFark) {
-                        enYakinFark = fark;
-                        siradakiKey = key;
-                    }
-                    
-                    // Aktif vakti işaretle (şu an hangisindeyiz)
-                    const kart = document.getElementById(`kart-${key}`);
-                    if(kart) kart.classList.remove('aktif');
-                });
-
-                // Geri sayımı yazdır
-                const hours = Math.floor(enYakinFark / 3600000);
-                const mins = Math.floor((enYakinFark % 3600000) / 60000);
-                const secs = Math.floor((enYakinFark % 60000) / 1000);
-                
-                document.getElementById('kalan-sure').innerText = 
-                    `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-                document.getElementById('siradaki-vakit-adi').innerText = vakitIsimleri[siradakiKey] + " vaktine kalan";
-                
-                // Sıradaki vaktin kartını parlat
-                document.getElementById(`kart-${siradakiKey}`).classList.add('aktif');
-
-            }, 1000);
-        }
-
-        konumuAl();
+        startApp();
     </script>
 </body>
 </html>
