@@ -8,169 +8,153 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --accent: #38bdf8; --bg: #0f172a; --text-dark: #1e293b; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
+        :root { --accent: #38bdf8; --bg: #0f172a; --text: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding-bottom: 90px; }
         
-        /* Üst Duyuru Alanı */
-        #duyuru-alani { background: #e94560; color: white; padding: 12px; font-size: 0.9rem; font-weight: bold; text-align: center; display: none; position: sticky; top: 0; z-index: 1000; }
+        #duyuru-bar { padding: 12px; font-weight: bold; text-align: center; display: none; }
         
-        .header { padding: 40px 20px; text-align: center; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
-        .city { font-size: 1.6rem; font-weight: bold; margin: 0; letter-spacing: 1px; }
-        .timer { font-size: 4.2rem; font-weight: 800; color: var(--accent); margin: 5px 0; font-variant-numeric: tabular-nums; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
-        .date-badge { background: rgba(255,255,255,0.1); border: 1px solid white; border-radius: 30px; padding: 6px 15px; font-size: 0.85rem; opacity: 0.9; }
-
-        /* Beyaz Panel */
-        .main-content { background: #f1f5f9; color: var(--text-dark); border-top-left-radius: 35px; border-top-right-radius: 35px; min-height: 600px; padding: 25px 15px; margin-top: -25px; box-shadow: 0 -10px 30px rgba(0,0,0,0.3); }
+        .header { padding: 40px 20px; text-align: center; }
+        .timer { font-size: 4rem; font-weight: 800; color: var(--accent); margin: 10px 0; }
         
-        /* Yatay Vakitler */
-        .vakit-scroll { display: flex; justify-content: space-between; overflow-x: auto; gap: 10px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #ddd; scrollbar-width: none; }
-        .vakit-box { text-align: center; min-width: 60px; padding: 10px 5px; border-radius: 12px; transition: 0.3s; border: 1px solid transparent; }
-        .vakit-box.active { background: rgba(56, 189, 248, 0.1); color: #e94560; border-color: var(--accent); transform: scale(1.05); }
-        .vakit-name { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
-        .vakit-time { font-size: 1rem; font-weight: 800; display: block; margin-top: 5px; color: #1e293b; }
-
-        /* İçerik Kartları */
-        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--accent); font-weight: bold; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
-        .card-body { line-height: 1.6; font-size: 0.95rem; color: #334155; }
-
-        /* Alt Menü */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #e2e8f0; z-index: 100; }
-        .nav-item { color: #64748b; font-size: 1.2rem; }
+        .main-container { background: #f1f5f9; color: var(--text); border-top-left-radius: 35px; border-top-right-radius: 35px; padding: 25px 15px; min-height: 800px; }
+        
+        .vakit-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
+        .vakit-item { min-width: 75px; background: white; padding: 12px 5px; border-radius: 15px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .vakit-item.active { border: 2px solid var(--accent); background: #e0f2fe; }
+        
+        .pro-card { border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
+        .card-tag { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; color: var(--accent); }
+        .card-text { font-size: 1rem; line-height: 1.6; font-weight: 500; }
+        
+        .share-btn { margin-top: 15px; background: #e2e8f0; border: none; padding: 8px 15px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; cursor: pointer; color: #475569; }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 18px; border-top: 1px solid #e2e8f0; }
+        .nav-item { color: #94a3b8; font-size: 1.3rem; cursor: pointer; }
         .nav-item.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <div id="duyuru-alani"></div>
+<div id="duyuru-bar"></div>
 
+<div id="page-home">
     <div class="header">
-        <p class="city">Ceylanpınar</p>
+        <h2 style="margin:0">Ceylanpınar</h2>
         <div class="timer" id="countdown">00:00:00</div>
-        <span class="date-badge" id="h-date">Yükleniyor...</span>
+        <div id="h-date" style="opacity:0.8">Yükleniyor...</div>
     </div>
 
-    <div class="main-content">
-        <div class="vakit-scroll" id="vakit-list">
+    <div class="main-container">
+        <div class="vakit-grid" id="vakit-list"></div>
+
+        <div id="content-area">
+            <div class="pro-card" id="card-ayet-bg">
+                <div class="card-tag"><i class="fas fa-book-open"></i> Vaktin Ayeti</div>
+                <div class="card-text" id="txt-ayet">...</div>
+                <button class="share-btn" onclick="paylas('Vaktin Ayeti', 'txt-ayet')"><i class="fas fa-share-alt"></i> Paylaş</button>
             </div>
 
-        <div class="card">
-            <div class="card-header"><i class="fas fa-book-open"></i> Vaktin Ayeti</div>
-            <div id="ayet-text" class="card-body">Veriler getiriliyor...</div>
-        </div>
+            <div class="pro-card" id="card-hadis-bg">
+                <div class="card-tag"><i class="fas fa-quote-left"></i> Vaktin Hadisi</div>
+                <div class="card-text" id="txt-hadis">...</div>
+                <button class="share-btn" onclick="paylas('Vaktin Hadisi', 'txt-hadis')"><i class="fas fa-share-alt"></i> Paylaş</button>
+            </div>
 
-        <div class="card">
-            <div class="card-header"><i class="fas fa-scroll"></i> Hikmetname</div>
-            <div id="hikmet-text" class="card-body">Veriler getiriliyor...</div>
+            <div class="pro-card" id="card-esma-bg" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white;">
+                <div class="card-tag" style="color:white"><i class="fas fa-star"></i> Esmaül Hüsna</div>
+                <div class="card-text" id="txt-esma" style="font-size: 1.2rem; text-align:center; font-weight: 800;">...</div>
+            </div>
+
+            <div class="pro-card" id="card-dua-bg">
+                <div class="card-tag"><i class="fas fa-hands-praying"></i> Günlük Dua</div>
+                <div class="card-text" id="txt-dua">...</div>
+                <button class="share-btn" onclick="paylas('Günlük Dua', 'txt-dua')"><i class="fas fa-share-alt"></i> Paylaş</button>
+            </div>
+
+            <div class="pro-card" id="card-bilgi-bg">
+                <div class="card-tag"><i class="fas fa-info-circle"></i> Günün Bilgisi</div>
+                <div class="card-text" id="txt-bilgi">...</div>
+                <button class="share-btn" onclick="paylas('Günün Bilgisi', 'txt-bilgi')"><i class="fas fa-share-alt"></i> Paylaş</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active"><i class="fas fa-home"></i></div>
-        <div class="nav-item"><i class="fas fa-compass"></i></div>
-        <div class="nav-item"><i class="fas fa-book"></i></div>
-        <div class="nav-item"><i class="fas fa-cog"></i></div>
-    </nav>
+<nav class="bottom-nav">
+    <div class="nav-item active"><i class="fas fa-home"></i></div>
+    <div class="nav-item"><i class="fas fa-compass"></i></div>
+    <div class="nav-item"><i class="fas fa-book"></i></div>
+    <div class="nav-item"><i class="fas fa-cog"></i></div>
+</nav>
 
-    <script>
-        // Senin Firebase Bilgilerin
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6VtB6eHqiNNyoJ0x4yCpnGChB6p9AYnM",
-            authDomain: "safakvakti-5f929.firebaseapp.com",
-            projectId: "safakvakti-5f929",
-            storageBucket: "safakvakti-5f929.firebasestorage.app",
-            messagingSenderId: "1089272374742",
-            appId: "1:1089272374742:web:bc422dad721627342fb077"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC6VtB6eHqiNNyoJ0x4yCpnGChB6p9AYnM",
+        authDomain: "safakvakti-5f929.firebaseapp.com",
+        projectId: "safakvakti-5f929",
+        storageBucket: "safakvakti-5f929.firebasestorage.app",
+        messagingSenderId: "1089272374742",
+        appId: "1:1089272374742:web:bc422dad721627342fb077"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        const names = { Fajr:"İmsak", Sunrise:"Güneş", Dhuhr:"Öğle", Asr:"İkindi", Maghrib:"Akşam", Isha:"Yatsı" };
-        let times = {};
+    const vNames = { Fajr:"İmsak", Sunrise:"Güneş", Dhuhr:"Öğle", Asr:"İkindi", Maghrib:"Akşam", Isha:"Yatsı" };
+    let vTimes = {};
 
-        async function startApp() {
-            try {
-                // Ceylanpınar vakitlerini çek
-                const res = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Ceylanpinar&country=Turkey&method=13');
-                const d = await res.json();
-                times = d.data.timings;
-                
-                // Hicri Tarih
-                const h = d.data.date.hijri;
-                document.getElementById('h-date').innerText = `${h.day} ${h.month.en} ${h.year}`;
-                
-                // Vakit Listesi Oluştur
-                const list = document.getElementById('vakit-list');
-                list.innerHTML = "";
-                Object.keys(names).forEach(k => {
-                    list.innerHTML += `
-                        <div class="vakit-box" id="b-${k}">
-                            <span class="vakit-name">${names[k]}</span>
-                            <span class="vakit-time">${times[k]}</span>
-                        </div>`;
+    async function init() {
+        const res = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Ceylanpinar&country=Turkey&method=13');
+        const d = await res.json();
+        vTimes = d.data.timings;
+        document.getElementById('h-date').innerText = d.data.date.hijri.day + " " + d.data.date.hijri.month.en + " " + d.data.date.hijri.year;
+        
+        const list = document.getElementById('vakit-list');
+        Object.keys(vNames).forEach(k => {
+            list.innerHTML += `<div class="vakit-item" id="v-${k}"><div style="font-size:0.7rem; font-weight:bold; color:#64748b">${vNames[k]}</div><div style="font-size:1rem; font-weight:800; margin-top:5px">${vTimes[k]}</div></div>`;
+        });
+        setInterval(counter, 1000);
+        sync();
+    }
+
+    function counter() {
+        const now = new Date();
+        let next = null; let nextK = "";
+        Object.keys(vNames).forEach(k => {
+            const [h, m] = vTimes[k].split(':');
+            let v = new Date(); v.setHours(h, m, 0);
+            if (v < now) v.setDate(v.getDate() + 1);
+            if (!next || (v - now) < (next - now)) { next = v; nextK = k; }
+            document.getElementById(`v-${k}`).classList.remove('active');
+        });
+        const diff = next - now;
+        const h = Math.floor(diff/3600000); const m = Math.floor((diff%3600000)/60000); const s = Math.floor((diff%60000)/1000);
+        document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        document.getElementById(`v-${nextK}`).classList.add('active');
+    }
+
+    function sync() {
+        db.collection("icerik").doc("guncel").onSnapshot(doc => {
+            if(doc.exists) {
+                const v = doc.data();
+                const map = { ayet:'txt-ayet', hadis:'txt-hadis', esma:'txt-esma', dua:'txt-dua', bilgi:'txt-bilgi' };
+                Object.keys(map).forEach(k => {
+                    document.getElementById(map[k]).innerText = v[k] || "...";
+                    if(v[k+'R']) document.getElementById('card-'+k+'-bg').style.backgroundColor = v[k+'R'];
                 });
-
-                setInterval(updateCountdown, 1000);
-                listenToAdmin();
-            } catch (err) {
-                console.error("Başlatma hatası:", err);
+                const dBar = document.getElementById('duyuru-bar');
+                if(v.duyuru) { dBar.innerText = "📢 " + v.duyuru; dBar.style.background = v.duyuruR; dBar.style.display = "block"; }
+                else dBar.style.display = "none";
             }
+        });
+    }
+
+    function paylas(title, id) {
+        const text = document.getElementById(id).innerText;
+        if (navigator.share) {
+            navigator.share({ title: 'Şafak Vakti', text: title + ":\n" + text + "\n\nŞafak Vakti Uygulaması" });
         }
-
-        function updateCountdown() {
-            const now = new Date();
-            let next = null; 
-            let nextKey = "";
-
-            Object.keys(names).forEach(k => {
-                const [h, m] = times[k].split(':');
-                let vDate = new Date();
-                vDate.setHours(parseInt(h), parseInt(m), 0);
-                
-                if (vDate < now) vDate.setDate(vDate.getDate() + 1);
-
-                let diff = vDate - now;
-                if (!next || diff < (next - now)) {
-                    next = vDate;
-                    nextKey = k;
-                }
-                document.getElementById(`b-${k}`).classList.remove('active');
-            });
-
-            // Geri sayımı yaz
-            const diff = next - now;
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            
-            document.getElementById('countdown').innerText = 
-                `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-            
-            // Sıradaki vakti parlat
-            const activeBox = document.getElementById(`b-${nextKey}`);
-            if(activeBox) activeBox.classList.add('active');
-        }
-
-        function listenToAdmin() {
-            // Admin panelinden gelen verileri canlı dinle
-            db.collection("icerik").doc("guncel").onSnapshot((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('ayet-text').innerText = data.ayet || "Namaz, müminin miracıdır.";
-                    document.getElementById('hikmet-text').innerText = data.hikmet || "Gönül ne kahve ister ne kahvehane...";
-                    
-                    const duyuru = document.getElementById('duyuru-alani');
-                    if(data.duyuru && data.duyuru.trim() !== "") {
-                        duyuru.innerText = "📢 " + data.duyuru;
-                        duyuru.style.display = "block";
-                    } else {
-                        duyuru.style.display = "none";
-                    }
-                }
-            });
-        }
-
-        startApp();
-    </script>
+    }
+    init();
+</script>
 </body>
 </html>
