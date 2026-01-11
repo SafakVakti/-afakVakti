@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şafak Vakti</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a2e; color: white; text-align: center; padding: 20px; }
+        .vakit-kart { background: #16213e; margin: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; }
+        h1 { color: #e94560; }
+        #sehir { font-size: 1.2rem; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>Şafak Vakti</h1>
+    <div id="sehir">İstanbul - Yükleniyor...</div>
+
+    <div id="vakitler-listesi">
+        </div>
+
+    <script>
+        async function vakitleriGetir() {
+            const sehir = 'Istanbul';
+            const ulke = 'Turkey';
+            // Senin istediğin o tam API linki:
+            const url = `https://api.aladhan.com/v1/timingsByCity?city=${sehir}&country=${ulke}&method=13`;
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                const vakitler = result.data.timings;
+
+                const liste = document.getElementById('vakitler-listesi');
+                const isimler = {
+                    "Fajr": "İmsak",
+                    "Sunrise": "Güneş",
+                    "Dhuhr": "Öğle",
+                    "Asr": "İkindi",
+                    "Maghrib": "Akşam",
+                    "Isha": "Yatsı"
+                };
+
+                liste.innerHTML = "";
+                for (let anahtar in isimler) {
+                    liste.innerHTML += `
+                        <div class="vakit-kart">
+                            <span>${isimler[anahtar]}</span>
+                            <span>${vakitler[anahtar]}</span>
+                        </div>
+                    `;
+                }
+                document.getElementById('sehir').innerText = sehir;
+            } catch (error) {
+                console.error("Hata:", error);
+            }
+        }
+
+        vakitleriGetir();
+    </script>
+</body>
+</html>
