@@ -3,95 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Şafak Vakti - Admin Paneli</title>
+    <title>Şafak Vakti - Yönetim Paneli</title>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .admin-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { color: #1e293b; text-align: center; margin-bottom: 25px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #64748b; font-size: 0.9rem; }
-        textarea, input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-size: 1rem; }
-        button { background: #38bdf8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #0ea5e9; }
-        #status { text-align: center; margin-top: 15px; font-weight: bold; display: none; }
-        .success { color: #10b981; }
+        :root { --p: #0ea5e9; --bg: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
+        .admin-box { max-width: 700px; margin: auto; background: white; border-radius: 24px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: var(--p); margin: 0; font-size: 1.8rem; }
+        .section-title { display: flex; align-items: center; gap: 10px; font-weight: 800; margin-top: 25px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; color: #475569; }
+        .input-card { background: #f8fafc; padding: 15px; border-radius: 16px; margin-top: 10px; border: 1px solid #e2e8f0; }
+        label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #64748b; }
+        textarea, input, select { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 1rem; transition: 0.3s; }
+        textarea:focus { border-color: var(--p); outline: none; background: white; }
+        .color-pick { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        .color-pick input { width: 50px; height: 40px; padding: 2px; cursor: pointer; }
+        .btn-save { background: var(--p); color: white; border: none; padding: 18px; width: 100%; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; margin-top: 30px; box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3); transition: 0.3s; }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(14, 165, 233, 0.4); }
     </style>
 </head>
 <body>
 
-    <div class="admin-card">
-        <h2>Şafak Vakti Yönetim</h2>
-        
-        <label>📢 Üst Duyuru (Kırmızı Alan)</label>
-        <input type="text" id="duyuruInput" placeholder="Örn: Hayırlı Cumalar...">
-
-        <label>📖 Vaktin Ayeti</label>
-        <textarea id="ayetInput" rows="3" placeholder="Ayet ve numarasını yazın..."></textarea>
-        
-        <label>📜 Hikmetname / Günün Sözü</label>
-        <textarea id="hikmetInput" rows="3" placeholder="Günün güzel sözünü yazın..."></textarea>
-
-        <button onclick="guncelle()">UYGULAMAYI GÜNCELLE</button>
-        <div id="status">✅ Güncelleme Başarılı!</div>
+<div class="admin-box">
+    <div class="header">
+        <h1>Şafak Vakti Kumanda</h1>
+        <p>Uygulama içeriğini buradan anlık yönetin</p>
     </div>
 
-    <script>
-        // Senin Firebase Bilgilerin
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6VtB6eHqiNNyoJ0x4yCpnGChB6p9AYnM",
-            authDomain: "safakvakti-5f929.firebaseapp.com",
-            projectId: "safakvakti-5f929",
-            storageBucket: "safakvakti-5f929.firebasestorage.app",
-            messagingSenderId: "1089272374742",
-            appId: "1:1089272374742:web:bc422dad721627342fb077"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+    <div class="input-card">
+        <label>📢 Genel Duyuru & Bildirim</label>
+        <input type="text" id="duyuru" placeholder="Hayırlı Cumalar...">
+        <div class="color-pick">
+            <label>Duyuru Rengi:</label>
+            <input type="color" id="duyuruR" value="#e94560">
+        </div>
+    </div>
 
-        async function guncelle() {
-            const ayet = document.getElementById('ayetInput').value;
-            const hikmet = document.getElementById('hikmetInput').value;
-            const duyuru = document.getElementById('duyuruInput').value;
-            const btn = document.querySelector('button');
-            const status = document.getElementById('status');
+    <div class="section-title"><i class="fas fa-book-open"></i> Günlük Maneviyat</div>
+    
+    <div class="input-card">
+        <label>Vaktin Ayeti</label>
+        <textarea id="ayet" rows="2"></textarea>
+        <div class="color-pick"><label>Kart Rengi:</label><input type="color" id="ayetR" value="#ffffff"></div>
+    </div>
 
-            btn.disabled = true;
-            btn.innerText = "GÖNDERİLİYOR...";
+    <div class="input-card">
+        <label>Vaktin Hadisi</label>
+        <textarea id="hadis" rows="2"></textarea>
+        <div class="color-pick"><label>Kart Rengi:</label><input type="color" id="hadisR" value="#ffffff"></div>
+    </div>
 
-            try {
-                await db.collection("icerik").doc("guncel").set({
-                    ayet: ayet,
-                    hikmet: hikmet,
-                    duyuru: duyuru,
-                    sonGuncelleme: new Date().toLocaleString('tr-TR')
-                });
-                
-                status.style.display = "block";
-                status.className = "success";
-                
-                setTimeout(() => { 
-                    status.style.display = "none";
-                    btn.disabled = false;
-                    btn.innerText = "UYGULAMAYI GÜNCELLE";
-                }, 3000);
+    <div class="input-card">
+        <label>Esmaül Hüsna</label>
+        <input type="text" id="esma" placeholder="Er-Rahman: Merhamet eden">
+        <div class="color-pick"><label>Kart Rengi:</label><input type="color" id="esmaR" value="#ffffff"></div>
+    </div>
 
-            } catch (e) {
-                alert("Hata: " + e.message);
-                btn.disabled = false;
-                btn.innerText = "TEKRAR DENE";
-            }
+    <div class="input-card">
+        <label>Günlük Dua</label>
+        <textarea id="dua" rows="2"></textarea>
+        <div class="color-pick"><label>Kart Rengi:</label><input type="color" id="duaR" value="#ffffff"></div>
+    </div>
+
+    <div class="input-card">
+        <label>Günün Bilgisi</label>
+        <textarea id="bilgi" rows="2"></textarea>
+        <div class="color-pick"><label>Kart Rengi:</label><input type="color" id="bilgiR" value="#ffffff"></div>
+    </div>
+
+    <button class="btn-save" onclick="guncelle()">TÜMÜNÜ YAYINLA</button>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC6VtB6eHqiNNyoJ0x4yCpnGChB6p9AYnM",
+        authDomain: "safakvakti-5f929.firebaseapp.com",
+        projectId: "safakvakti-5f929",
+        storageBucket: "safakvakti-5f929.firebasestorage.app",
+        messagingSenderId: "1089272374742",
+        appId: "1:1089272374742:web:bc422dad721627342fb077"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function guncelle() {
+        const fields = ['duyuru','duyuruR','ayet','ayetR','hadis','hadisR','esma','esmaR','dua','duaR','bilgi','bilgiR'];
+        let data = {};
+        fields.forEach(f => data[f] = document.getElementById(f).value);
+        
+        try {
+            await db.collection("icerik").doc("guncel").set(data);
+            alert("Uygulama başarıyla güncellendi!");
+        } catch(e) { alert("Hata oluştu!"); }
+    }
+
+    db.collection("icerik").doc("guncel").onSnapshot(doc => {
+        if(doc.exists) {
+            const v = doc.data();
+            Object.keys(v).forEach(k => { if(document.getElementById(k)) document.getElementById(k).value = v[k]; });
         }
-
-        // Mevcut verileri çekip kutulara doldur (düzenleme kolaylığı için)
-        db.collection("icerik").doc("guncel").get().then((doc) => {
-            if (doc.exists) {
-                const v = doc.data();
-                document.getElementById('ayetInput').value = v.ayet || "";
-                document.getElementById('hikmetInput').value = v.hikmet || "";
-                document.getElementById('duyuruInput').value = v.duyuru || "";
-            }
-        });
-    </script>
+    });
+</script>
 </body>
 </html>
