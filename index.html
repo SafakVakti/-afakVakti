@@ -5,55 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Şafak Vakti</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a2e; color: white; text-align: center; padding: 20px; }
-        .vakit-kart { background: #16213e; margin: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; }
-        h1 { color: #e94560; }
-        #sehir { font-size: 1.2rem; margin-bottom: 20px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
+            color: white; 
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        h1 { font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; color: #f8fafc; }
+        #sehir { font-size: 0.9rem; opacity: 0.7; margin-bottom: 30px; }
+        
+        .timer-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+        #kalan-sure { font-size: 2.5rem; font-weight: bold; color: #38bdf8; }
+        #vakit-adi { font-size: 1.1rem; margin-top: 10px; display: block; }
+
+        .vakit-kart { 
+            background: rgba(255, 255, 255, 0.03); 
+            margin: 8px 0; 
+            padding: 15px 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: 0.3s;
+        }
+        .vakit-kart.aktif { background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; }
     </style>
 </head>
 <body>
 
-    <h1>Şafak Vakti</h1>
-    <div id="sehir">İstanbul - Yükleniyor...</div>
+    <div class="container">
+        <h1>Şafak Vakti</h1>
+        <div id="sehir">İstanbul</div>
 
-    <div id="vakitler-listesi">
+        <div class="timer-box">
+            <span id="vakit-adi">Sıradaki Vakte Kalan</span>
+            <div id="kalan-sure">00:00:00</div>
         </div>
 
-    <script>
-        async function vakitleriGetir() {
-            const sehir = 'Istanbul';
-            const ulke = 'Turkey';
-            // Senin istediğin o tam API linki:
-            const url = `https://api.aladhan.com/v1/timingsByCity?city=${sehir}&country=${ulke}&method=13`;
+        <div id="vakitler-listesi">
+            </div>
+    </div>
 
+    <script>
+        let ezanVakitleri = {};
+        const isimler = { "Fajr": "İmsak", "Sunrise": "Güneş", "Dhuhr": "Öğle", "Asr": "İkindi", "Maghrib": "Akşam", "Isha": "Yatsı" };
+
+        async function vakitleriGetir() {
+            const url = `https://api.aladhan.com/v1/timingsByCity?city=Istanbul&country=Turkey&method=13`;
             try {
                 const response = await fetch(url);
                 const result = await response.json();
-                const vakitler = result.data.timings;
+                ezanVakitleri = result.data.timings;
+                arayuzuGuncelle();
+                sayaciBaslat();
+            } catch (error) { console.error("Hata:", error); }
+        }
 
-                const liste = document.getElementById('vakitler-listesi');
-                const isimler = {
-                    "Fajr": "İmsak",
-                    "Sunrise": "Güneş",
-                    "Dhuhr": "Öğle",
-                    "Asr": "İkindi",
-                    "Maghrib": "Akşam",
-                    "Isha": "Yatsı"
-                };
-
-                liste.innerHTML = "";
-                for (let anahtar in isimler) {
-                    liste.innerHTML += `
-                        <div class="vakit-kart">
-                            <span>${isimler[anahtar]}</span>
-                            <span>${vakitler[anahtar]}</span>
-                        </div>
-                    `;
-                }
-                document.getElementById('sehir').innerText = sehir;
-            } catch (error) {
-                console.error("Hata:", error);
+        function arayuzuGuncelle() {
+            const liste = document.getElementById('vakitler-listesi');
+            liste.innerHTML = "";
+            for (let anahtar in isimler) {
+                liste.innerHTML += `
+                    <div class="vakit-kart" id="kart-${anahtar}">
+                        <span>${isimler[anahtar]}</span>
+                        <span>${ezanVakitleri[anahtar]}</span>
+                    </div>
+                `;
             }
+        }
+
+        function sayaciBaslat() {
+            setInterval(() => {
+                const simdi = new Date();
+                let enYakinVakit = null;
+                let minFark = Infinity;
+
+                for (let v in isimler) {
+                    const [saat, dk] = ezanVakitleri[v].split(':');
+                    const vakitTarihi = new Date();
+                    vakitTarihi.setHours(saat, dk, 0);
+
+                    let fark = vakitTarihi - simdi;
+                    if (fark > 0 && fark < minFark) {
+                        minFark = fark;
+                        enYakinVakit = isimler[v];
+                    }
+                }
+
+                if (enYakinVakit) {
+                    const h = Math.floor(minFark / 3600000);
+                    const m = Math.floor((minFark % 3600000) / 60000);
+                    const s = Math.floor((minFark % 60000) / 1000);
+                    document.getElementById('kalan-sure').innerText = 
+                        `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                    document.getElementById('vakit-adi').innerText = `${enYakinVakit} vaktine kalan`;
+                }
+            }, 1000);
         }
 
         vakitleriGetir();
