@@ -10,29 +10,26 @@
     <style>
         :root { --accent: #38bdf8; --bg: #0f172a; --text: #1e293b; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding-bottom: 90px; overflow-x: hidden; }
-        
         #duyuru-bar { padding: 12px; font-weight: bold; text-align: center; display: none; position: sticky; top: 0; z-index: 100; }
-        
-        .header { padding: 40px 20px; text-align: center; }
-        .timer { font-size: 4rem; font-weight: 800; color: var(--accent); margin: 10px 0; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
-        
+        .header { padding: 30px 20px; text-align: center; }
+        .timer { font-size: 3.5rem; font-weight: 800; color: var(--accent); margin: 5px 0; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
         .main-container { background: #f1f5f9; color: var(--text); border-top-left-radius: 35px; border-top-right-radius: 35px; padding: 25px 15px; min-height: 100vh; }
-        
-        .vakit-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; -ms-overflow-style: none; }
+        .vakit-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
         .vakit-grid::-webkit-scrollbar { display: none; }
         .vakit-item { min-width: 85px; background: white; padding: 15px 5px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; }
         .vakit-item.active { border: 2.5px solid var(--accent); background: #e0f2fe; transform: scale(1.05); }
-        
-        .pro-card { border-radius: 22px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); position: relative; transition: 0.3s; border: 1px solid rgba(0,0,0,0.05); }
+        .pro-card { border-radius: 22px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); position: relative; border: 1px solid rgba(0,0,0,0.05); background: white; }
         .card-tag { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: #64748b; }
         .card-text { font-size: 1.05rem; line-height: 1.6; font-weight: 600; color: #1e293b; }
-        
         .share-btn { margin-top: 15px; background: rgba(0,0,0,0.05); border: none; padding: 10px 18px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; color: #475569; display: flex; align-items: center; gap: 8px; }
-        .share-btn:active { background: rgba(0,0,0,0.1); }
-        
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 20px; border-top: 1px solid #e2e8f0; z-index: 1000; }
         .nav-item { color: #94a3b8; font-size: 1.4rem; cursor: pointer; transition: 0.3s; }
         .nav-item.active { color: var(--accent); transform: translateY(-5px); }
+        .location-area { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .location-selects { display: flex; gap: 5px; }
+        .location-selects select { background: rgba(255,255,255,0.1); color: white; border: 1px solid var(--accent); padding: 5px 10px; border-radius: 10px; outline: none; font-weight: bold; }
+        .location-selects select option { color: black; }
+        .btn-loc { background: var(--accent); color: #0f172a; border: none; padding: 5px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -41,43 +38,26 @@
 
 <div id="page-content">
     <div class="header">
-        <h2 style="margin:0; letter-spacing: 1px;">Ceylanpınar</h2>
+        <div class="location-area">
+            <div id="loc-name" style="font-weight: 700; margin-bottom: 5px;"><i class="fas fa-map-marker-alt"></i> Şehir Seçin</div>
+            <div class="location-selects">
+                <select id="ilSec" onchange="ilceleriYukle()"></select>
+                <select id="ilceSec" onchange="init()"><option value="Merkez">Merkez</option></select>
+            </div>
+            <button class="btn-loc" onclick="konumAl()"><i class="fas fa-crosshairs"></i> KONUMU BUL</button>
+        </div>
         <div class="timer" id="countdown">00:00:00</div>
         <div id="h-date" style="opacity:0.8; font-weight: 600;">Yükleniyor...</div>
     </div>
 
     <div class="main-container">
         <div class="vakit-grid" id="vakit-list"></div>
-
         <div id="cards-area">
-            <div class="pro-card" id="bg-ayet">
-                <div class="card-tag"><i class="fas fa-book-open"></i> Vaktin Ayeti</div>
-                <div class="card-text" id="txt-ayet">...</div>
-                <button class="share-btn" onclick="paylas('Vaktin Ayeti', 'txt-ayet')"><i class="fas fa-paper-plane"></i> Paylaş</button>
-            </div>
-
-            <div class="pro-card" id="bg-hadis">
-                <div class="card-tag"><i class="fas fa-mosque"></i> Vaktin Hadisi</div>
-                <div class="card-text" id="txt-hadis">...</div>
-                <button class="share-btn" onclick="paylas('Vaktin Hadisi', 'txt-hadis')"><i class="fas fa-paper-plane"></i> Paylaş</button>
-            </div>
-
-            <div class="pro-card" id="bg-esma" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white;">
-                <div class="card-tag" style="color:white; opacity: 0.9;"><i class="fas fa-star"></i> Esmaül Hüsna</div>
-                <div class="card-text" id="txt-esma" style="font-size: 1.3rem; text-align:center; font-weight: 800; padding: 10px 0;">...</div>
-            </div>
-
-            <div class="pro-card" id="bg-dua">
-                <div class="card-tag"><i class="fas fa-hands-praying"></i> Günlük Dua</div>
-                <div class="card-text" id="txt-dua">...</div>
-                <button class="share-btn" onclick="paylas('Günlük Dua', 'txt-dua')"><i class="fas fa-paper-plane"></i> Paylaş</button>
-            </div>
-
-            <div class="pro-card" id="bg-bilgi">
-                <div class="card-tag"><i class="fas fa-lightbulb"></i> Günün Bilgisi</div>
-                <div class="card-text" id="txt-bilgi">...</div>
-                <button class="share-btn" onclick="paylas('Günün Bilgisi', 'txt-bilgi')"><i class="fas fa-paper-plane"></i> Paylaş</button>
-            </div>
+            <div class="pro-card" id="bg-ayet"><div class="card-tag"><i class="fas fa-book-open"></i> Vaktin Ayeti</div><div class="card-text" id="txt-ayet">...</div><button class="share-btn" onclick="paylas('Vaktin Ayeti', 'txt-ayet')"><i class="fas fa-paper-plane"></i> Paylaş</button></div>
+            <div class="pro-card" id="bg-hadis"><div class="card-tag"><i class="fas fa-mosque"></i> Vaktin Hadisi</div><div class="card-text" id="txt-hadis">...</div><button class="share-btn" onclick="paylas('Vaktin Hadisi', 'txt-hadis')"><i class="fas fa-paper-plane"></i> Paylaş</button></div>
+            <div class="pro-card" id="bg-esma" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white;"><div class="card-tag" style="color:white; opacity: 0.9;"><i class="fas fa-star"></i> Esmaül Hüsna</div><div class="card-text" id="txt-esma" style="font-size: 1.3rem; text-align:center; font-weight: 800; padding: 10px 0;">...</div></div>
+            <div class="pro-card" id="bg-dua"><div class="card-tag"><i class="fas fa-hands-praying"></i> Günlük Dua</div><div class="card-text" id="txt-dua">...</div><button class="share-btn" onclick="paylas('Günlük Dua', 'txt-dua')"><i class="fas fa-paper-plane"></i> Paylaş</button></div>
+            <div class="pro-card" id="bg-bilgi"><div class="card-tag"><i class="fas fa-lightbulb"></i> Günün Bilgisi</div><div class="card-text" id="txt-bilgi">...</div><button class="share-btn" onclick="paylas('Günün Bilgisi', 'txt-bilgi')"><i class="fas fa-paper-plane"></i> Paylaş</button></div>
         </div>
     </div>
 </div>
@@ -90,7 +70,6 @@
 </nav>
 
 <script>
-    // Firebase Config (Kendi bilgilerinle kontrol et)
     const firebaseConfig = {
         apiKey: "AIzaSyC6VtB6eHqiNNyoJ0x4yCpnGChB6p9AYnM",
         authDomain: "safakvakti-5f929.firebaseapp.com",
@@ -102,36 +81,65 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Service Worker Kaydı
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-    }
-
     const vNames = { Fajr:"İmsak", Sunrise:"Güneş", Dhuhr:"Öğle", Asr:"İkindi", Maghrib:"Akşam", Isha:"Yatsı" };
     let vTimes = {};
     const ezanSesi = new Audio('https://www.islamicfinder.org/prayer-times/sounds/adhan/Makkah.mp3');
 
+    const iller = ["Adana","Adiyaman","Afyonkarahisar","Agri","Amasya","Ankara","Antalya","Artvin","Aydin","Balikesir","Bilecik","Bingol","Bitlis","Bolu","Burdur","Bursa","Canakkale","Cankiri","Corum","Denizli","Diyarbakir","Edirne","Elazig","Erzincan","Erzurum","Eskisehir","Gaziantep","Giresun","Gumushane","Hakkari","Hatay","Isparta","Mersin","Istanbul","Izmir","Kars","Kastamonu","Kayseri","Kirklareli","Kirsehir","Kocaeli","Konya","Kutahya","Malatya","Manisa","Kahramanmaras","Mardin","Mugla","Mus","Nevsehir","Nigde","Ordu","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Tekirdag","Tokat","Trabzon","Tunceli","Sanliurfa","Usak","Van","Yozgat","Zonguldak","Aksaray","Bayburt","Karaman","Kirikkale","Batman","Sirnak","Bartin","Ardahan","Igdir","Yalova","Karabuk","Kilis","Osmaniye","Duzce"];
+
+    function illeriDoldur() {
+        const ilSec = document.getElementById('ilSec');
+        iller.forEach(il => {
+            let opt = document.createElement('option');
+            opt.value = il; opt.innerText = il;
+            if(il === "Sanliurfa") opt.selected = true;
+            ilSec.appendChild(opt);
+        });
+        ilceleriYukle();
+    }
+
+    function ilceleriYukle() {
+        const il = document.getElementById('ilSec').value;
+        const ilceSec = document.getElementById('ilceSec');
+        ilceSec.innerHTML = `<option value="${il}">${il} (Merkez)</option>`;
+        if(il === "Sanliurfa") ilceSec.innerHTML += `<option value="Ceylanpinar" selected>Ceylanpınar</option>`;
+        init();
+    }
+
+    async function konumAl() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const res = await fetch(`https://api.aladhan.com/v1/timingsByAddress?address=${pos.coords.latitude},${pos.coords.longitude}&method=13`);
+                const d = await res.json();
+                vTimes = d.data.timings;
+                document.getElementById('loc-name').innerHTML = `<i class="fas fa-crosshairs"></i> Tam Konum Tespit Edildi`;
+                ekranGuncelle(d.data.date.hijri);
+            }, () => { alert("Konum izni alınamadı."); });
+        }
+    }
+
     async function init() {
-        try {
-            const res = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Ceylanpinar&country=Turkey&method=13');
-            const d = await res.json();
-            vTimes = d.data.timings;
-            document.getElementById('h-date').innerText = d.data.date.hijri.day + " " + d.data.date.hijri.month.tr || d.data.date.hijri.month.en + " " + d.data.date.hijri.year;
-            
-            const list = document.getElementById('vakit-list');
-            list.innerHTML = "";
-            Object.keys(vNames).forEach(k => {
-                list.innerHTML += `<div class="vakit-item" id="v-${k}"><div style="font-size:0.75rem; font-weight:bold; color:#64748b">${vNames[k]}</div><div style="font-size:1.1rem; font-weight:800; margin-top:5px; color:#1e293b">${vTimes[k]}</div></div>`;
-            });
-            setInterval(counter, 1000);
-            syncWithFirebase();
-            Notification.requestPermission();
-        } catch (e) { console.log("Hata: ", e); }
+        const ilce = document.getElementById('ilceSec').value;
+        const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${ilce}&country=Turkey&method=13`);
+        const d = await res.json();
+        vTimes = d.data.timings;
+        document.getElementById('loc-name').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${ilce}`;
+        ekranGuncelle(d.data.date.hijri);
+    }
+
+    function ekranGuncelle(hijri) {
+        document.getElementById('h-date').innerText = `${hijri.day} ${hijri.month.en} ${hijri.year}`;
+        const list = document.getElementById('vakit-list');
+        list.innerHTML = "";
+        Object.keys(vNames).forEach(k => {
+            list.innerHTML += `<div class="vakit-item" id="v-${k}"><div style="font-size:0.75rem; font-weight:bold; color:#64748b">${vNames[k]}</div><div style="font-size:1.1rem; font-weight:800; margin-top:5px; color:#1e293b">${vTimes[k]}</div></div>`;
+        });
+        if(!window.tStarted) { setInterval(counter, 1000); window.tStarted = true; }
+        syncWithFirebase();
     }
 
     function counter() {
-        const now = new Date();
-        let next = null; let nextK = "";
+        const now = new Date(); let next = null; let nextK = "";
         Object.keys(vNames).forEach(k => {
             const [h, m] = vTimes[k].split(':');
             let v = new Date(); v.setHours(h, m, 0);
@@ -139,72 +147,34 @@
             if (!next || (v - now) < (next - now)) { next = v; nextK = k; }
             document.getElementById(`v-${k}`).classList.remove('active');
         });
-        
         const diff = next - now;
         const h = Math.floor(diff/3600000); const m = Math.floor((diff%3600000)/60000); const s = Math.floor((diff%60000)/1000);
-        const kalanText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        document.getElementById('countdown').innerText = kalanText;
+        document.getElementById('countdown').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         document.getElementById(`v-${nextK}`).classList.add('active');
-
-        // Üst Paneli Güncelle (Her dakikada bir)
-        if (s === 0) {
-            updateOngoingNotification(kalanText, vNames[nextK]);
-        }
-
-        // Ezan Oku
-        if (h === 0 && m === 0 && s === 0) {
-            ezanSesi.play();
-        }
-    }
-
-    function updateOngoingNotification(sure, vakit) {
-        if ('serviceWorker' in navigator && Notification.permission === 'granted') {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification("Şafak Vakti - Ceylanpınar", {
-                    body: `${vakit} vaktine ${sure} kaldı.`,
-                    icon: 'icon.png',
-                    tag: 'vakit-guncelleme',
-                    ongoing: true,
-                    silent: true
-                });
-            });
-        }
     }
 
     function syncWithFirebase() {
         db.collection("icerik").doc("guncel").onSnapshot(doc => {
             if(doc.exists) {
                 const data = doc.data();
-                const config = [
-                    {key:'ayet', txt:'txt-ayet', bg:'bg-ayet'},
-                    {key:'hadis', txt:'txt-hadis', bg:'bg-hadis'},
-                    {key:'esma', txt:'txt-esma', bg:'bg-esma'},
-                    {key:'dua', txt:'txt-dua', bg:'bg-dua'},
-                    {key:'bilgi', txt:'txt-bilgi', bg:'bg-bilgi'}
-                ];
-                config.forEach(item => {
-                    document.getElementById(item.txt).innerText = data[item.key] || "...";
-                    if(data[item.key+'R']) document.getElementById(item.bg).style.backgroundColor = data[item.key+'R'];
+                const config = [{k:'ayet',t:'txt-ayet',b:'bg-ayet'},{k:'hadis',t:'txt-hadis',b:'bg-hadis'},{k:'esma',t:'txt-esma',b:'bg-esma'},{k:'dua',t:'txt-dua',b:'bg-dua'},{k:'bilgi',t:'txt-bilgi',b:'bg-bilgi'}];
+                config.forEach(i => {
+                    document.getElementById(i.t).innerText = data[i.k] || "...";
+                    if(data[i.k+'R']) document.getElementById(i.b).style.backgroundColor = data[i.k+'R'];
                 });
                 const dBar = document.getElementById('duyuru-bar');
-                if(data.duyuru) {
-                    dBar.innerText = "📢 " + data.duyuru;
-                    dBar.style.backgroundColor = data.duyuruR || "#e94560";
-                    dBar.style.display = "block";
-                } else { dBar.style.display = "none"; }
+                if(data.duyuru) { dBar.innerText = "📢 " + data.duyuru; dBar.style.backgroundColor = data.duyuruR || "#e94560"; dBar.style.display = "block"; } else { dBar.style.display = "none"; }
             }
         });
     }
 
     function paylas(baslik, elementId) {
         const icerik = document.getElementById(elementId).innerText;
-        const mesaj = `📍 *Şafak Vakti - ${baslik}*\n\n"${icerik}"\n\n_Ceylanpınar Namaz Vakitleri_`;
-        if (navigator.share) {
-            navigator.share({ title: 'Şafak Vakti', text: mesaj });
-        }
+        const mesaj = `📍 *Şafak Vakti - ${baslik}*\n\n"${icerik}"`;
+        if (navigator.share) { navigator.share({ title: 'Şafak Vakti', text: mesaj }); }
     }
 
-    init();
+    window.onload = illeriDoldur;
 </script>
 </body>
 </html>
